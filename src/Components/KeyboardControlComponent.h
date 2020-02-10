@@ -60,7 +60,7 @@ public:
 
       if (keyCode.compare(upKey) == 0)
       {
-        transform->velocity.y = -10;
+        transform->velocity.y = -100;
         transform->velocity.x = 0;
         sprite->Play("UpAnimation");
       }
@@ -68,13 +68,13 @@ public:
       if (keyCode.compare(rightKey) == 0)
       {
         transform->velocity.y = 0;
-        transform->velocity.x = 10;
+        transform->velocity.x = 100;
         sprite->Play("RightAnimation");
       }
 
       if (keyCode.compare(downKey) == 0)
       {
-        transform->velocity.y = 10;
+        transform->velocity.y = 100;
         transform->velocity.x = 0;
         sprite->Play("DownAnimation");
       }
@@ -82,7 +82,7 @@ public:
       if (keyCode.compare(leftKey) == 0)
       {
         transform->velocity.y = 0;
-        transform->velocity.x = -10;
+        transform->velocity.x = -100;
         sprite->Play("LeftAnimation");
       }
 

@@ -13,7 +13,8 @@ EntityManager manager;
 SDL_Renderer *Game::renderer;
 AssetManager *Game::assetManager = new AssetManager(&manager);
 SDL_Event Game::event;
-Map* map;
+SDL_Rect Game::camera = {0, 0, WINDOW_WIDTH, WINDOW_HEIGHT};
+Map *map;
 
 Game::Game()
 {
@@ -64,6 +65,8 @@ void Game::Initialize(int width, int height)
   return;
 }
 
+Entity &player(manager.AddEntity("chopper", PLAYER_LAYER));
+
 void Game::LoadLevel(int levelNumber)
 {
   // Start including new assets to the assetmanager list
@@ -73,19 +76,18 @@ void Game::LoadLevel(int levelNumber)
   assetManager->AddTexture("jungle-tiletexture", std::string("./assets/tilemaps/jungle.png").c_str());
 
   map = new Map("jungle-tiletexture", 2, 32);
-  map->LoadMap("./assets/tilemaps/jungle.png", 25, 20);
+  map->LoadMap("./assets/tilemaps/jungle.map", 25, 20);
 
-  Entity &chopperEntity(manager.AddEntity("chopper"));
-  chopperEntity.AddComponent<TransformComponent>(240, 106, 0, 0, 32, 32, 1);
-  chopperEntity.AddComponent<SpriteComponent>("chopper-image", 2, 90, true, false);
-  chopperEntity.AddComponent<KeyboardControlComponent>("up", "right", "down", "left", "space");
+  player.AddComponent<TransformComponent>(240, 106, 0, 0, 32, 32, 1);
+  player.AddComponent<SpriteComponent>("chopper-image", 2, 90, true, false);
+  player.AddComponent<KeyboardControlComponent>("up", "right", "down", "left", "space");
 
   // Start including entities and also components to them
-  Entity &tankEntity(manager.AddEntity("tank"));
+  Entity &tankEntity(manager.AddEntity("tank", ENEMY_LAYER));
   tankEntity.AddComponent<TransformComponent>(0, 0, 20, 20, 32, 32, 1);
   tankEntity.AddComponent<SpriteComponent>("tank-image");
 
-  Entity &radarEntity(manager.AddEntity("rader"));
+  Entity &radarEntity(manager.AddEntity("rader", UI_LAYER));
   radarEntity.AddComponent<TransformComponent>(720, 15, 0, 0, 64, 64, 1);
   radarEntity.AddComponent<SpriteComponent>("radar-image", 8, 150, false, true);
 }
@@ -132,6 +134,8 @@ void Game::Update()
 
   // todo
   manager.Update(deltaTime);
+
+  HandleCameraMovement();
 }
 
 void Game::Render()
@@ -147,6 +151,21 @@ void Game::Render()
   manager.Render();
 
   SDL_RenderPresent(renderer);
+}
+
+void Game::HandleCameraMovement()
+{
+
+  TransformComponent* mainPlayerTransform = player.GetComponent<TransformComponent>();
+
+  camera.x = mainPlayerTransform->position.x - (WINDOW_WIDTH / 2);
+  camera.y = mainPlayerTransform->position.y - (WINDOW_HEIGHT / 2);
+
+  camera.x = camera.x < 0 ? 0 : camera.x;
+  camera.y = camera.y < 0 ? 0 : camera.y;
+
+  camera.x = camera.x > camera.w ? camera.w : camera.x;
+  camera.y = camera.y > camera.h ? camera.h : camera.y;
 }
 
 void Game::Destroy()
