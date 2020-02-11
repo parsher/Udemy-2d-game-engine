@@ -11,11 +11,6 @@ void EntityManager::ClearData()
   }
 }
 
-bool EntityManager::HasNoEntities()
-{
-  return entities.size() == 0;
-}
-
 void EntityManager::Update(float deltaTime)
 {
   for (auto &entity : entities)
@@ -35,31 +30,14 @@ void EntityManager::Render()
   }
 }
 
-std::string EntityManager::CheckEntityCollisions(Entity &myEntity) const
+bool EntityManager::HasNoEntities()
 {
-  ColliderComponent *myCollider = myEntity.GetComponent<ColliderComponent>();
-  for (auto &entity : entities)
-  {
-    if (entity->name.compare(myEntity.name) != 0 && entity->name.compare("Tile") != 0) // not tile && my self 
-    {
-      if (entity->HasComponent<ColliderComponent>())
-      {
-        ColliderComponent *otherCollider = entity->GetComponent<ColliderComponent>();
-        if (Collision::CheckRectangleCollision(myCollider->collider, otherCollider->collider))
-        {
-          return otherCollider->colliderTag;
-        }
-      }
-    }
-  }
-  return std::string();
+  return entities.size() == 0;
 }
 
-Entity &EntityManager::AddEntity(std::string entityName, LayerType layer)
+unsigned int EntityManager::GetEntityCount()
 {
-  Entity *entity = new Entity(*this, entityName, layer);
-  entities.emplace_back(entity);
-  return *entity;
+  return entities.size();
 }
 
 std::vector<Entity *> EntityManager::GetEntities() const
@@ -81,7 +59,60 @@ std::vector<Entity *> EntityManager::GetEntitiesByLayer(LayerType layer) const
   return selectedEntities;
 }
 
-unsigned int EntityManager::GetEntityCount()
+void EntityManager::ListAllEntities() const
 {
-  return entities.size();
+  unsigned int i = 0;
+  for (auto &entity : entities)
+  {
+    std::cout << "Entity[" << i << "]: " << entity->name << std::endl;
+    entity->ListAllComponents();
+    i++;
+  }
+}
+
+CollisionType EntityManager::CheckCollisions() const
+{
+  for (int i = 0; i < entities.size() - 1; i++)
+  {
+    auto &thisEntity = entities[i];
+    if (thisEntity->HasComponent<ColliderComponent>())
+    {
+      ColliderComponent *thisCollider = thisEntity->GetComponent<ColliderComponent>();
+      for (int j = i + 1; j < entities.size(); j++)
+      {
+        auto &thatEntity = entities[j];
+        if (thisEntity->name.compare(thatEntity->name) != 0 && thatEntity->HasComponent<ColliderComponent>())
+        {
+          ColliderComponent *thatCollider = thatEntity->GetComponent<ColliderComponent>();
+          if (Collision::CheckRectangleCollision(thisCollider->collider, thatCollider->collider))
+          {
+            if (thisCollider->colliderTag.compare("PLAYER") == 0 && thatCollider->colliderTag.compare("ENEMY") == 0)
+            {
+              return PLAYER_ENEMY_COLLISION;
+            }
+            if (thisCollider->colliderTag.compare("PLAYER") == 0 && thatCollider->colliderTag.compare("PROJECTILE") == 0)
+            {
+              return PLAYER_PROJECTILE_COLLISION;
+            }
+            if (thisCollider->colliderTag.compare("ENEMY") == 0 && thatCollider->colliderTag.compare("FRIENDLY_PROJECTILE") == 0)
+            {
+              return ENEMY_PROJECTILE_COLLISION;
+            }
+            if (thisCollider->colliderTag.compare("PLAYER") == 0 && thatCollider->colliderTag.compare("LEVEL_COMPLETE") == 0)
+            {
+              return PLAYER_LEVEL_COMPLETE_COLLISION;
+            }
+          }
+        }
+      }
+    }
+  }
+  return NO_COLLISION;
+}
+
+Entity &EntityManager::AddEntity(std::string entityName, LayerType layer)
+{
+  Entity *entity = new Entity(*this, entityName, layer);
+  entities.emplace_back(entity);
+  return *entity;
 }
